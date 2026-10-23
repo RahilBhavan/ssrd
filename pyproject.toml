@@ -1,0 +1,46 @@
+[project]
+name = "ssrd"
+version = "0.1.0"
+description = "Scam-Site Respawn Detector: CT-log monitor for known scam-kit fingerprints"
+authors = [
+    { name = "Rahil Bhavan", email = "rbhavanzim@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "datasketch>=2.0.0",
+    "dnspython>=2.9.0",
+    "httpx>=0.28.1",
+    "idna>=3.20",
+    "mmh3>=5.3.1",
+    "py-tlsh>=5.0.0",
+    "rich>=15.0.0",
+    "selectolax>=1.0.0",
+    "tldextract>=5.4.0",
+]
+
+[project.scripts]
+ssrd = "ssrd.cli:main"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+train = [
+    "scikit-learn>=1.9.1",
+]

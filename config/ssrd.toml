@@ -1,0 +1,166 @@
+# SSRD configuration. Every tunable lives here; changes are versioned in git.
+
+[paths]
+data_dir = "data"            # private, gitignored
+db = "data/ssrd.sqlite"
+
+[safety]
+# Fetcher refuses to start unless the public egress IP belongs to one of these ASNs.
+# 22768 = Synergy Broadband (Verve apartment Wi-Fi). UMich (AS36375) is deliberately absent.
+allowed_egress_asns = [22768]
+resolvers = ["1.1.1.1", "8.8.8.8"]
+
+[ct]
+# Static-CT (tiled) logs that serve compact JSONL "names" tiles.
+poll_seconds = 10
+max_tiles_per_poll = 200      # catch-up cap per log per poll
+background_sample_mod = 1000  # keep ~1/N of all registrable names (unfiltered) as negatives for filter tuning
+log_urls = [
+  "https://mon.sycamore.ct.letsencrypt.org/2026h2",
+  "https://mon.willow.ct.letsencrypt.org/2026h2",
+  "https://tuscolo2026h2.skylight.geomys.org",
+]
+
+[filter]
+# "model": character n-gram classifier (data/models/name_model.json, `ssrd train-names`).
+# Measured Oct 17 on CBR names listed after 2026-07-01 vs CT background:
+#   keyword list: recall 0.44 at 1.19% pass rate; model >= 0.93: recall 0.55 at 0.71% pass rate.
+# Falls back to "keyword" if the model file is missing.
+mode = "model"
+model_threshold = 0.93
+# Matched against the IDNA-decoded registrable label only (e.g. "quantum-invest" in
+# quantum-invest.com); subdomains such as assets./learn. on established sites were mostly noise.
+# Terms of length >= 4 match as substrings; shorter terms and `boundary_terms` must stand alone
+# between separators/digits/edges.
+investment = [
+  "invest", "trade", "trading", "trader", "capital", "crypto", "krypto", "bitcoin", "btc",
+  "coin", "profit", "finance", "financ", "wealth", "asset", "fund", "forex", "fx", "broker",
+  "exchange", "stock", "yield", "mining", "token", "earning", "income", "dividend", "portfolio",
+  "quant", "arbitrage", "staking", "defi", "ventures", "holding", "markets", "bourse",
+]
+russian_translit = [
+  "investic", "investits", "investicii", "kripto", "birzha", "birja", "dohod", "dokhod",
+  "zarabot", "pribyl", "kapital", "treyd", "trejd", "aktiv", "fond", "vklad", "passiv",
+  # Cyrillic (matched after IDNA decode)
+  "инвест", "крипт", "биржа", "доход", "заработ", "прибыл", "капитал", "трейд", "вклад",
+]
+recovery = [
+  "recover", "refund", "reclaim", "chargeback", "compensat", "restitut", "fundsback",
+  "vozvrat", "kompensac", "возврат", "компенсац",
+]
+bait = [
+  "bitlicense", "nydfs", "musk", "elon", "tesla", "gazprom", "sber", "rosneft", "lukoil",
+  "tinkoff", "газпром", "сбер",
+]
+boundary_terms = ["defi", "elon", "musk", "sber", "fond", "aktiv", "earning", "holding", "ventures", "tesla", "quant"]
+# Priority (fetch order when the queue exceeds capacity): +1 per matched group, +2 for
+# bait terms, +1 for TLDs common in the CBR seed set.
+priority_tlds = ["online", "live", "pro", "top", "xyz", "site", "vip", "biz", "org", "net", "cc", "ltd", "company", "io", "co", "info", "world", "trade", "finance", "investments"]
+# Registrable domains never considered (infra/CDN hostnames, not customer sites).
+skip_suffixes = [
+  "amazonaws.com", "cloudfront.net", "azurewebsites.net", "googleusercontent.com",
+  "cloudapp.net", "akamaiedge.net", "fastly.net", "edgekey.net", "letsencrypt.org",
+]
+
+[fetch]
+enabled = true                # enabled 2026-10-17 at Rahil's direction, after safety-check passed in-container
+mode = "passive_visit"        # "strict" (homepage only) | "passive_visit" (chosen 2026-10-17)
+max_assets = 3
+asset_budget_seconds = 15     # stop fetching favicon/assets once a visit has spent this long
+asset_min_invest_terms = 3    # passive_visit: fetch favicon/assets only for pages that already look like investment sites
+delays_seconds = [1200, 7200, 86400]   # first fetch +20m; retries only if parked/blank/error
+timeout_seconds = 10           # per connect/read operation
+total_timeout_seconds = 20     # hard cap on one response body, against slow-drip tarpits
+connect_timeout_seconds = 5
+concurrency = 2               # parallel visits (network only); DB writes stay on one thread
+max_redirects = 3
+max_bytes = 2_000_000
+requests_per_minute = 20      # global; each request goes to a different site in practice
+expire_after_seconds = 86400  # first visits still unrun this long after due are marked "expired" (counted, never silent)
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+accept_language = "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
+content_types = ["text/html", "application/xhtml+xml", "text/plain", "text/css",
+                 "application/javascript", "text/javascript", "application/x-javascript",
+                 "image/x-icon", "image/vnd.microsoft.icon", "image/png", "image/svg+xml",
+                 "image/gif", "image/jpeg", "image/webp"]
+library_asset_pattern = "(jquery|bootstrap|font-?awesome|swiper|slick|owl\\.carousel|aos|wow|gsap|lodash|moment|popper|recaptcha|gtag|analytics|metrika|tag\\.js)"
+
+[score]
+tlsh_max_distance = 70        # placeholder; set from sweep (SPEC R6)
+jaccard_min = 0.80            # tag-shingle MinHash; placeholder
+shingle_k = 5
+minhash_perm = 128
+# A value (favicon, asset/inline-script hash, asset path, title) seen on more than
+# max(common_min_hosts, common_share * N) distinct background/live hosts is generic: zero weight.
+common_min_hosts = 3
+common_share = 0.02
+min_title_len = 8
+# Copy fingerprint: shared word 5-grams (brand tokens removed, background-common ones excluded).
+copy_min_shared = 30          # placeholder; set from sweep
+copy_min_containment = 0.10
+copy_medium_shared = 12
+
+[urlscan]
+api_base = "https://urlscan.io/api/v1"
+min_interval_seconds = 2.0
+
+[watch]
+# Hourly watchdog (`ssrd watch`, ops/ssrd-job.sh hourly): desktop alert when any rule trips.
+ct_stale_seconds = 900        # ct_state not advanced for 15 min
+max_due_ct = 2000             # fetch backlog that would start expiring candidates
+
+[review]
+# Suggested labels written by an assistant are stored under this reviewer ID. They are shown as
+# hints in `ssrd review` but never count toward precision, kappa, the kit library or the memo.
+assist_reviewer = "claude-assist"
+
+[export]
+# `ssrd export` writes one CSV per recipient with leads a human reviewer labeled scam-kit (never
+# assistant suggestions). Every lead goes to `always`; a lead whose page language (<html lang>)
+# starts with a key in [export.by_lang] also goes to those recipients. Blocklists (Netcraft,
+# Google Safe Browsing, APWG) are deliberately absent until the VCU says reporting won't
+# interfere with an investigation.
+always = ["cbr"]
+
+[export.by_lang]
+it = ["consob"]
+fr = ["amf"]
+es = ["cnmv"]
+de = ["bafin"]
+pl = ["cert-pl"]
+pt = ["cmvm"]
+el = ["hcmc"]
+hr = ["hanfa"]
+en = ["fca", "sec-cftc"]
+
+# Rules that write assistant suggestions (reviewer [review].assist_reviewer) the moment a page
+# alerts. First match wins. Suggestions are hints in `ssrd review`; they never count as labels.
+# Fields: label, note, and any of title (regex), text (regex on sanitized text), kit (regex on the
+# alerting kit name), min_invest_terms.
+[[prelabel.rules]]
+label = "parked"
+text = "(?i)(your domain (is|has) expired|renew the domain|something amazing will be constructed here|this domain is parked)"
+note = "rule: registrar/hosting placeholder page"
+
+[[prelabel.rules]]
+label = "decoy-cloaked"
+text = "(?i)confirming you are human.{0,200}|you will be redirected to \\S+ in \\d+ seconds"
+note = "rule: 'human verification' cloaking gate that redirects to another domain"
+
+[[prelabel.rules]]
+label = "scam-kit"
+title = "(?i)\\|\\s*(premium\\s+)?ai trading( automation)? platform\\s*\\|\\s*official"
+min_invest_terms = 5
+note = "rule: 'AI Trading Platform | Official Website' lead-capture template"
+
+[[prelabel.rules]]
+label = "scam-kit"
+title = "ᐉ"
+min_invest_terms = 3
+note = "rule: 'ᐉ' multilingual 'personal AI analyst / second income' template"
+
+[[prelabel.rules]]
+label = "scam-kit"
+text = "\\b233 / 250\\b"
+min_invest_terms = 3
+note = "rule: multilingual '233 / 250 already joined, 17 places left' AI-analyst funnel"

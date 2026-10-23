@@ -1,0 +1,1 @@
+"""Scam-Site Respawn Detector."""

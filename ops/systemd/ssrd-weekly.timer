@@ -1,0 +1,9 @@
+[Unit]
+Description=SSRD weekly kit-library rebuild
+
+[Timer]
+OnCalendar=Sun *-*-* 09:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
