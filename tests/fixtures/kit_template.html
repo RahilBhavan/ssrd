@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>{BRAND} — Инвестиционная платформа нового поколения</title>
+<link rel="icon" href="/static/img/fav.png">
+<link rel="stylesheet" href="/static/css/app.min.css">
+<link rel="stylesheet" href="/static/css/theme-dark.css">
+<script src="/static/js/jquery.min.js"></script>
+</head>
+<body>
+<header class="nav"><div class="logo">{BRAND}</div><ul><li><a href="/login">Вход</a></li><li><a href="/register">Регистрация</a></li></ul></header>
+<section class="hero"><h1>Инвестируйте в криптовалюту с {BRAND}</h1>
+<p>Доход от 3% в день. Вывод средств за 24 часа. Лицензия BitLicense NYDFS.</p>
+<a class="btn" href="/register">Начать инвестировать</a></section>
+<section class="plans"><div class="plan"><h3>Start</h3><p>Депозит от $250, прибыль 30% за 10 дней</p></div>
+<div class="plan"><h3>Pro</h3><p>Депозит от $1000, прибыль 45% за 10 дней</p></div>
+<div class="plan"><h3>VIP</h3><p>Депозит от $10000, прибыль 70% за 10 дней</p></div></section>
+<section class="contacts"><p>Поддержка: <a href="https://t.me/support_invest_desk">Telegram</a></p>
+<p>Кошелёк для пополнения: {WALLET}</p></section>
+{EXTRA}
+<script>
+window.__APP_CONFIG__ = {"api":"/api/v2","features":["deposit","withdraw","referral"],"theme":"dark","chat":{"provider":"jivo","widget":"aXk2Zm9vYmFy"},"locale":"ru","currencies":["BTC","ETH","USDT"],"minDeposit":250};
+function initPlans(){document.querySelectorAll('.plan').forEach(function(p){p.addEventListener('click',function(){location.href='/register'})})}
+initPlans();
+</script>
+<footer>© 2026 {BRAND} Ltd. Все права защищены.</footer>
+</body>
+</html>

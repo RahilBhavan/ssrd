@@ -1,0 +1,12 @@
+# Private: seeds, flagged domains, captures, labels, manifests. Never commit.
+data/
+*.duckdb
+*.mmdb
+.env
+__pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Local generated artifacts (textbook, renders).
+exports/

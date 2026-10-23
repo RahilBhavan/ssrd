@@ -1,0 +1,8 @@
+[Unit]
+Description=SSRD weekly maintenance
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/.t3/projects/ssrd/ops/ssrd-job.sh weekly
+Nice=10

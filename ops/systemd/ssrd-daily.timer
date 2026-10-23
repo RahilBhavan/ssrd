@@ -1,0 +1,10 @@
+[Unit]
+Description=SSRD daily maintenance
+
+[Timer]
+OnCalendar=*-*-* 07:30
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target
