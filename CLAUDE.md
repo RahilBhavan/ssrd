@@ -51,7 +51,8 @@ Runs on Rahil's local box (no VPS): Docker containers, data in `./data`.
 - Tests use synthetic fixtures in `tests/fixtures/`. Never commit real scam HTML.
 - `scripts/privacy_check.py` runs as the git pre-commit and pre-push hook (install: see the script).
   Commit `95356d0` still names 5 seed domains: never push this branch's history; publish via a
-  fresh orphan/squash commit that passes `privacy_check.py --range`.
+  fresh orphan/squash commit that passes `privacy_check.py --range`. Public repo:
+  github.com/RahilBhavan/ssrd (published 2026-10-23); update it only with `scripts/publish.sh "msg"`.
 - Evidence manifest is append-only JSONL; never rewrite past entries.
 
 ## Language in code, docs, and output
