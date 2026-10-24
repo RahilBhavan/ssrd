@@ -73,7 +73,8 @@ uv run ssrd kits                                  # cluster into kits, rescore l
 docker compose build
 docker compose up -d ingest                       # CT tailer
 docker compose --profile check run --rm check     # safety check (must be all [ok])
-# after reading SAFETY.md and setting fetch.enabled = true:
+# after reading SAFETY.md, listing your network's ASN in config/ssrd.local.toml
+# (git-ignored, see SAFETY.md) and setting fetch.enabled = true:
 docker compose --profile fetch up -d fetcher
 
 uv run ssrd stats
@@ -92,11 +93,12 @@ uv run ssrd watch                                 # exit 1 if ingest/fetch stall
 
 - `src/ssrd/`: the pipeline modules, one per stage.
 - `tests/`: unit and pipeline tests with synthetic fixtures in `tests/fixtures/`.
-- `config/ssrd.toml`: thresholds, keyword lists and CT log URLs.
+- `config/ssrd.toml`: thresholds, keyword lists and CT log URLs. An optional git-ignored `config/ssrd.local.toml` overrides it, for example the allowed egress ASN.
 - `docker/`, `compose.yaml`: hardened ingest and fetcher containers with an nftables egress allowlist.
 - `ops/`: systemd user timers and the job wrapper.
 - `scripts/`: privacy check, publish script and the review demo renderer.
 - `docs/`: architecture, labeling guide, research log and the demo figure.
+- `CLAUDE.md`: agent workflow file for the author's coding agent; not needed to use the code.
 
 ## Documentation
 
@@ -128,6 +130,6 @@ Seed domains, captures and labels stay private and are not in this repository.
 
 ## License
 
-No license file yet.
+[MIT](LICENSE). The license covers this project's code only; third-party lists, logs and fetched pages keep their own terms.
 
 Part of [Rahil Bhavan's projects](https://github.com/RahilBhavan).
