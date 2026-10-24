@@ -1,6 +1,6 @@
 # SAFETY: running SSRD on the local box
 
-This replaces the VPS plan. Everything runs on `box`: Arch/Omarchy, 32 cores, 30 GB RAM, LUKS-encrypted disk, Docker, on the Verve apartment Wi-Fi (Synergy Broadband, AS22768, shared public IP).
+This replaces the VPS plan. Everything runs on one local Linux workstation (`box`) with an encrypted disk and Docker, on a home or shared residential network.
 That cuts the cost to $0, but scam sites now get fetched from a machine you use every day, on your home network. This file explains how that risk is contained.
 **Live fetching was turned on 2026-10-17 at Rahil's direction**, after `ssrd safety-check` passed inside the container. The mode is `passive_visit`, at 20 requests/min with 2 parallel workers.
 
@@ -9,10 +9,10 @@ That cuts the cost to $0, but scam sites now get fetched from a machine you use 
 | Concern | VPS plan | Local box | Control |
 |---|---|---|---|
 | Scam content near personal files | Isolated machine | Same machine | Fetcher runs in a hardened container (below). Only `data/` is mounted. No browser, no JS. |
-| Reaching your LAN, tailnet or Docker services (SSRF / DNS rebinding) | Nothing nearby | LAN 10.136.27.0/24, Tailscale 100.64/10, many Docker bridges 172.16/12 | Two independent layers: (1) the app resolves DNS itself and refuses any non-global IP on every hop, connecting only to that pinned IP; (2) a firewall inside the container drops all egress to private, CGNAT, link-local and loopback ranges. |
-| Whose IP the sites see | A datacenter IP | Your building's shared residential IP, 204.11.140.55 | Few requests per minute, one fixed browser UA, no forms. The IP is shared building NAT, so you aren't individually identifiable. You see less cloaking than from a datacenter, which **changes the decoy share**. Write that up as a method note. |
-| ISP or building network | Provider AUP | Synergy/Verve AUP | Low volume, HTTP(S) only, never port-scan. If you get a notice: stop, reply, don't evade. |
-| Running from the wrong network | n/a | The laptop might go to campus | **Egress check:** the fetcher refuses to start unless the current public IP's ASN is on `safety.allowed_egress_asns` (default: only AS22768). This keeps it off the UMich network (AS36375), where university AUP applies. |
+| Reaching your LAN, tailnet or Docker services (SSRF / DNS rebinding) | Nothing nearby | Your private LAN ranges (RFC 1918), Tailscale 100.64/10, many Docker bridges 172.16/12 | Two independent layers: (1) the app resolves DNS itself and refuses any non-global IP on every hop, connecting only to that pinned IP; (2) a firewall inside the container drops all egress to private, CGNAT, link-local and loopback ranges. |
+| Whose IP the sites see | A datacenter IP | Your residential or shared-building public IP | Few requests per minute, one fixed browser UA, no forms. On a shared NAT you are not individually identifiable; check whether yours is. You see less cloaking than from a datacenter, which **changes the decoy share**. Write that up as a method note. |
+| ISP or building network | Provider AUP | Your ISP's or building's acceptable-use policy | Low volume, HTTP(S) only, never port-scan. If you get a notice: stop, reply, don't evade. |
+| Running from the wrong network | n/a | The laptop might join a campus or employer network | **Egress check:** the fetcher refuses to start unless the current public IP's ASN is on `safety.allowed_egress_asns` (default: empty, so the fetcher refuses to start until you list your home network's ASN in the git-ignored `config/ssrd.local.toml`). This keeps it off campus or employer networks, where their acceptable-use policy applies. |
 | Uptime | 24/7 | Box sleeps or restarts | Restart policies. Ingest resumes from the saved tile position. Gaps are logged, and time-to-flag counts only uptime. |
 | Bandwidth | VPS cap | Home Wi-Fi | No certstream-server-go. A Python **names-tile tailer** reads only the small JSONL "names" tiles from Let's Encrypt (Sycamore and Willow) and Geomys (Tuscolo). Measured about 25 entries/s per LE log (Oct 17), roughly 0.3 KB per entry, so a few GB/day at most. The daily total is logged. |
 

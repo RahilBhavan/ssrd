@@ -68,7 +68,7 @@ def lookup_ns(domain: str) -> list[str]:
 
 
 def asn_for_ip(ip: str) -> dict:
-    """Team Cymru origin lookup over DNS: {'asn': 22768, 'prefix': ..., 'cc': ...}."""
+    """Team Cymru origin lookup over DNS: {'asn': 64496, 'prefix': ..., 'cc': ...}."""
     rev = ".".join(reversed(ip.split(".")))
     try:
         txt = _resolver().resolve(f"{rev}.origin.asn.cymru.com", "TXT")[0].to_text().strip('"')
@@ -100,14 +100,17 @@ def check_egress() -> dict:
     allowed = config.load()["safety"]["allowed_egress_asns"]
     info["ip"] = ip
     if info.get("asn") not in allowed:
-        raise UnsafeTarget(f"egress ASN {info.get('asn')} ({ip}) not in allowed_egress_asns {allowed}")
+        raise UnsafeTarget(
+            f"egress ASN {info.get('asn')} ({ip}) not in allowed_egress_asns {allowed}; "
+            "set it in config/ssrd.local.toml"
+        )
     return info
 
 
 def probe_private_blocked(timeout: float = 2.0) -> dict[str, bool]:
     """Try raw TCP connects to private ranges; True means the firewall blocked it (good)."""
     targets = {
-        "lan-gateway": ("10.136.27.254", 80),
+        "lan-gateway": ("192.168.1.1", 80),
         "docker-host": ("172.17.0.1", 80),
         "tailscale": ("100.100.100.100", 80),
         "metadata": ("169.254.169.254", 80),

@@ -14,7 +14,7 @@ SRC = Path(__file__).resolve().parents[1] / "src" / "ssrd"
     "ip,ok",
     [
         ("8.8.8.8", True),
-        ("10.136.27.254", False),
+        ("10.0.0.254", False),
         ("172.17.0.1", False),
         ("192.168.1.1", False),
         ("100.100.100.100", False),
@@ -46,7 +46,7 @@ def test_resolve_refuses_any_private_answer(monkeypatch):
                 def to_text(self):
                     return self.t
 
-            return [A("93.184.216.34"), A("10.136.27.5")]  # rebinding-style mixed answer
+            return [A("93.184.216.34"), A("10.0.0.5")]  # rebinding-style mixed answer
 
     monkeypatch.setattr(safety, "_resolver", lambda: R())
     with pytest.raises(safety.UnsafeTarget, match="non-public"):
@@ -79,7 +79,7 @@ def test_redirect_to_private_is_refused():
     def handler(req):
         return httpx.Response(302, headers={"location": "http://router.lan/admin"})
 
-    r = _fetcher(handler, {"site.example": "93.184.216.34", "router.lan": "10.136.27.254"}).get("https://site.example/")
+    r = _fetcher(handler, {"site.example": "93.184.216.34", "router.lan": "10.0.0.254"}).get("https://site.example/")
     assert r.body is None and r.error.startswith("unsafe:")
 
 
@@ -151,3 +151,34 @@ def test_slow_drip_response_is_cut_off(monkeypatch):
     )
     assert f.get("https://site.example/").error == "too_slow"
     assert _t  # keep import used
+
+
+def test_committed_config_allows_no_egress_network():
+    """The public config names no ASN, so a fresh checkout refuses every network."""
+    import tomllib
+
+    cfg = tomllib.loads((SRC.parents[1] / "config" / "ssrd.toml").read_text())
+    assert cfg["safety"]["allowed_egress_asns"] == []
+
+
+def test_check_egress_refuses_unlisted_asn_and_accepts_listed(monkeypatch):
+    from ssrd import config
+
+    monkeypatch.setattr(safety, "public_egress_ip", lambda: "203.0.113.7")
+    monkeypatch.setattr(safety, "asn_for_ip", lambda ip: {"asn": 64496})
+    monkeypatch.setitem(config.load()["safety"], "allowed_egress_asns", [])
+    with pytest.raises(safety.UnsafeTarget, match="ssrd.local.toml"):
+        safety.check_egress()
+    monkeypatch.setitem(config.load()["safety"], "allowed_egress_asns", [64496])
+    assert safety.check_egress()["ip"] == "203.0.113.7"
+
+
+def test_local_config_overrides_the_committed_one(tmp_path):
+    from ssrd import config
+
+    base = tmp_path / "ssrd.toml"
+    base.write_text(f'[paths]\ndata_dir = "{tmp_path}"\n[safety]\nallowed_egress_asns = []\nresolvers = ["1.1.1.1"]\n')
+    (tmp_path / "ssrd.local.toml").write_text("[safety]\nallowed_egress_asns = [64496]\n")
+    cfg = config.load.__wrapped__(str(base))
+    assert cfg["safety"]["allowed_egress_asns"] == [64496]
+    assert cfg["safety"]["resolvers"] == ["1.1.1.1"]
