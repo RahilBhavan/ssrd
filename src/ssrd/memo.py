@@ -41,9 +41,7 @@ def leads(conn) -> list[dict]:
     out = []
     for r in conn.execute(
         "SELECT a.page_id, a.first_alert_at, a.kit_name, p.domain, p.features, "
-        "(SELECT MIN(ct_ts) FROM candidates c WHERE c.domain=p.domain) AS ct_ts, "
-        "(SELECT details FROM scores s JOIN kits k ON k.id=s.kit_id WHERE s.page_id=p.id AND s.alert=1 "
-        "ORDER BY k.name=a.kit_name DESC, s.score DESC LIMIT 1) AS details "
+        "(SELECT MIN(ct_ts) FROM candidates c WHERE c.domain=p.domain) AS ct_ts "
         "FROM alert_log a JOIN pages p ON p.id=a.page_id "
         "WHERE EXISTS(SELECT 1 FROM scores s WHERE s.page_id=p.id AND s.alert=1) "  # still alerting today
         "ORDER BY a.first_alert_at"
@@ -58,7 +56,13 @@ def leads(conn) -> list[dict]:
             conf = "likely"
         else:
             conf = "speculative"
-        d = json.loads(r["details"]) if r["details"] else {"signals": [], "member_domain": ""}
+        # Fetched per row: SQLite before 3.46 rejects an outer column in a subquery's ORDER BY.
+        details = conn.execute(
+            "SELECT s.details FROM scores s JOIN kits k ON k.id=s.kit_id WHERE s.page_id=? AND s.alert=1 "
+            "ORDER BY k.name=? DESC, s.score DESC LIMIT 1",
+            (r["page_id"], r["kit_name"]),
+        ).fetchone()
+        d = json.loads(details[0]) if details and details[0] else {"signals": [], "member_domain": ""}
         f = json.loads(r["features"])
         out.append(
             {
