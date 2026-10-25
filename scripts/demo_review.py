@@ -1,6 +1,6 @@
 """Render the review queue to docs/review-demo.svg from synthetic fixtures only (no real data).
 
-    uv run python scripts/demo_review.py
+uv run python scripts/demo_review.py
 """
 
 from __future__ import annotations
@@ -16,7 +16,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TMP = Path(tempfile.mkdtemp(prefix="ssrd-demo-"))
 cfg = (ROOT / "config" / "ssrd.toml").read_text()
-cfg = cfg.replace('data_dir = "data"', f'data_dir = "{TMP}"').replace('db = "data/ssrd.sqlite"', f'db = "{TMP}/demo.sqlite"')
+cfg = cfg.replace('data_dir = "data"', f'data_dir = "{TMP}"').replace(
+    'db = "data/ssrd.sqlite"', f'db = "{TMP}/demo.sqlite"'
+)
 cfg = re.sub(r"(?m)^enabled = .*$", "enabled = false", cfg)
 (TMP / "ssrd.toml").write_text(cfg)
 os.environ["SSRD_CONFIG"] = str(TMP / "ssrd.toml")
@@ -56,8 +58,11 @@ def main() -> None:
     score.score_page(conn, pid)
     console = Console(record=True, width=110, force_terminal=True)
     rows = review.queue(conn, "demo")
-    console.print(f"{len(rows)} pages to review as [bold]demo[/]. Keys: "
-                  + ", ".join(f"{k}={v}" for k, v in review.KEYS.items()) + ", q=quit, enter=skip")
+    console.print(
+        f"{len(rows)} pages to review as [bold]demo[/]. Keys: "
+        + ", ".join(f"{k}={v}" for k, v in review.KEYS.items())
+        + ", q=quit, enter=skip"
+    )
     review.show(console, conn, rows[0])
     console.print("label> s")
     out = ROOT / "docs" / "review-demo.svg"

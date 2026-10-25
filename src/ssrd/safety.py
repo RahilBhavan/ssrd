@@ -68,7 +68,7 @@ def lookup_ns(domain: str) -> list[str]:
 
 
 def asn_for_ip(ip: str) -> dict:
-    """Team Cymru origin lookup over DNS: {'asn': 64500, 'prefix': ..., 'cc': ...}."""
+    """Team Cymru origin lookup over DNS: {'asn': 64496, 'prefix': ..., 'cc': ...}."""
     rev = ".".join(reversed(ip.split(".")))
     try:
         txt = _resolver().resolve(f"{rev}.origin.asn.cymru.com", "TXT")[0].to_text().strip('"')
@@ -100,7 +100,10 @@ def check_egress() -> dict:
     allowed = config.load()["safety"]["allowed_egress_asns"]
     info["ip"] = ip
     if info.get("asn") not in allowed:
-        raise UnsafeTarget(f"egress ASN {info.get('asn')} ({ip}) not in allowed_egress_asns {allowed}")
+        raise UnsafeTarget(
+            f"egress ASN {info.get('asn')} ({ip}) not in allowed_egress_asns {allowed}; "
+            "set it in config/ssrd.local.toml"
+        )
     return info
 
 

@@ -6,8 +6,9 @@ db = "data/ssrd.sqlite"
 
 [safety]
 # Fetcher refuses to start unless the public egress IP belongs to one of these ASNs.
-# 64500 = the home ISP. UMich (the university ASN) is deliberately absent.
-allowed_egress_asns = [64500]
+# Empty means every network is refused. Put your own network's ASN in the git-ignored
+# config/ssrd.local.toml:  [safety]  allowed_egress_asns = [<your ASN>]
+allowed_egress_asns = []
 resolvers = ["1.1.1.1", "8.8.8.8"]
 
 [ct]

@@ -19,9 +19,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TOKEN = re.compile(r"(?<![\w@.-])((?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24})(?![\w-])", re.I)
 # Public infrastructure that legitimately appears in code and docs.
-ALLOW = {"urlscan.io", "web.archive.org", "archive.org", "brooklynda.org", "cbr.ru", "github.com", "cloudflare.com",
-         "google.com", "googleusercontent.com", "x.com", "example.com", "example.test", "dfpi.ca.gov",
-         "t.me", "wa.me"}
+ALLOW = {
+    "urlscan.io",
+    "web.archive.org",
+    "archive.org",
+    "brooklynda.org",
+    "cbr.ru",
+    "github.com",
+    "cloudflare.com",
+    "google.com",
+    "googleusercontent.com",
+    "x.com",
+    "example.com",
+    "example.test",
+    "dfpi.ca.gov",
+    "t.me",
+    "wa.me",
+}
 
 
 def private_domains() -> set[str]:
@@ -29,8 +43,13 @@ def private_domains() -> set[str]:
     if not db.exists():
         return set()
     conn = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
-    out = {r[0].lower() for r in conn.execute("SELECT domain FROM seeds UNION SELECT domain FROM pages "
-                                              "WHERE source IN ('urlscan','wayback','seedlive','live')")}
+    out = {
+        r[0].lower()
+        for r in conn.execute(
+            "SELECT domain FROM seeds UNION SELECT domain FROM pages "
+            "WHERE source IN ('urlscan','wayback','seedlive','live')"
+        )
+    }
     return out - ALLOW
 
 
@@ -48,8 +67,11 @@ def main() -> int:
     added = "\n".join(line for line in text.splitlines() if line.startswith("+") or not a.staged)
     hits = sorted({t.lower() for t in TOKEN.findall(added)} & private_domains())
     if hits:
-        print(f"privacy check: {len(hits)} private domain(s) would be committed/pushed, e.g. "
-              f"{', '.join(h[:3] + '…' for h in hits[:5])}. Remove them (see CLAUDE.md Data handling).", file=sys.stderr)
+        print(
+            f"privacy check: {len(hits)} private domain(s) would be committed/pushed, e.g. "
+            f"{', '.join(h[:3] + '…' for h in hits[:5])}. Remove them (see CLAUDE.md Data handling).",
+            file=sys.stderr,
+        )
         return 1
     return 0
 

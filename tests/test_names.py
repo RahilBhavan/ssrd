@@ -33,7 +33,9 @@ def test_defang():
 
 
 def test_cbr_site_splitting():
-    raw = "t.me/Demo_Bot, https://demo-robo-synthetic.com/ru, mail.alphafin-synthetic.com; vk.com/club1 sub.zeta-demo.top"
+    raw = (
+        "t.me/Demo_Bot, https://demo-robo-synthetic.com/ru, mail.alphafin-synthetic.com; vk.com/club1 sub.zeta-demo.top"
+    )
     assert seeds.split_sites(raw) == ["alphafin-synthetic.com", "demo-robo-synthetic.com", "zeta-demo.top"]
 
 
