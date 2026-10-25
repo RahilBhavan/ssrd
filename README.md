@@ -23,6 +23,10 @@ Status on Oct 23 2026, reported by the author from a private run. The run data l
 
 KCDA is the Kings County DA seized-domain set. CBR is the Bank of Russia blacklist.
 
+On Oct 25, scoring added a cap on common-value host counts to suppress widely reused
+site-builder files. This setting is provisional and can also suppress genuine kit matches.
+The measurements above predate this change; precision for the revised scorer is pending human labels.
+
 ## What it does
 
 - Ingests CT names tiles from static-CT logs (Let's Encrypt and Geomys).
@@ -52,7 +56,7 @@ Offline path. This needs no network and no keys. The CT and fetch tests use reco
 
 ```sh
 uv sync --frozen
-uv run pytest -q          # 67 tests pass (checked Oct 24 2026)
+uv run pytest -q          # 71 tests pass (checked Oct 25 2026)
 uv run ruff check .
 uv run python scripts/demo_review.py   # re-renders docs/review-demo.svg from synthetic data
 ```
