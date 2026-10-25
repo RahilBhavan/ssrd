@@ -11,6 +11,14 @@ pub=${SSRD_PUBLIC_DIR:-$HOME/scratch/ssrd-public}
 git -C "$pub" pull -q --ff-only
 find "$pub" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
 git -C "$root" archive HEAD | tar -x -C "$pub"
+# Home-network identifiers were scrubbed from the public history on 2026-10-25; never republish them.
+# Patterns live in the git-ignored config/publish-deny.txt (one extended regex per line).
+deny="$root/config/publish-deny.txt"
+[ -s "$deny" ] || { echo "missing $deny, not publishing" >&2; exit 1; }
+if grep -rIlE -f "$deny" "$pub" --exclude-dir=.git; then
+  echo "home-network identifiers found in the files above, not publishing" >&2
+  exit 1
+fi
 (cd "$root" && uv run python - "$pub" <<'EOF'
 import os, subprocess, sys
 sys.path.insert(0, "scripts")

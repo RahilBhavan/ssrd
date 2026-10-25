@@ -32,7 +32,8 @@ def _hash_values(f: dict) -> list[tuple[str, str]]:
 
 
 def common_values(conn, refresh_seconds: int = 600) -> set[tuple[str, str]]:
-    """Values seen on more than max(common_min_hosts, common_share * N) background/live hosts get zero weight."""
+    """Values seen on more than max(common_min_hosts, min(common_share * N, common_max_hosts))
+    background/live hosts get zero weight."""
     if time.time() - _DENY["at"] < refresh_seconds:
         return _DENY["values"]
     cfg, cfg_review = config.load()["score"], config.load()["review"]
@@ -54,7 +55,7 @@ def common_values(conn, refresh_seconds: int = 600) -> set[tuple[str, str]]:
         for v in _hash_values(json.loads(row["features"])):
             if v in library:
                 hosts[v].add(row["domain"])
-    limit = max(cfg["common_min_hosts"], cfg["common_share"] * len(all_hosts))
+    limit = max(cfg["common_min_hosts"], min(cfg["common_share"] * len(all_hosts), cfg["common_max_hosts"]))
     _DENY.update(at=time.time(), values={v for v, h in hosts.items() if len(h) > limit})
     return _DENY["values"]
 

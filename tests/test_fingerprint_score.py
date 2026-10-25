@@ -79,3 +79,23 @@ def test_seed_pages_never_feed_the_denylist(conn):
     assert ("favicon", "7") in score.common_values(conn, refresh_seconds=0)
     score._DENY["at"] = 0
     db.now()
+
+
+def test_common_limit_is_capped_as_the_crawl_grows(conn, monkeypatch):
+    import json
+
+    from ssrd import config
+
+    cfg = config.load()
+    monkeypatch.setitem(cfg["score"], "common_max_hosts", 5)
+    monkeypatch.setattr(config, "load", lambda *a, **k: cfg)
+    builder = {"asset_sha256": {"/app.js": "b" * 64}}
+    conn.execute(
+        "INSERT INTO pages(source,ref,domain,features) VALUES('urlscan','r','ref.com',?)", (json.dumps(builder),)
+    )
+    rows = [(f"l{i}", f"l{i}.com", json.dumps(builder if i < 6 else {})) for i in range(1000)]
+    conn.executemany("INSERT INTO pages(source,ref,domain,features) VALUES('live',?,?,?)", rows)
+    score._DENY["at"] = 0
+    # 6 of 1,000 hosts is under the 2% share (20) but over the cap (5): generic.
+    assert ("asset", "b" * 64) in score.common_values(conn, refresh_seconds=0)
+    score._DENY["at"] = 0

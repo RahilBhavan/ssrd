@@ -92,9 +92,13 @@ jaccard_min = 0.80            # tag-shingle MinHash; placeholder
 shingle_k = 5
 minhash_perm = 128
 # A value (favicon, asset/inline-script hash, asset path, title) seen on more than
-# max(common_min_hosts, common_share * N) distinct background/live hosts is generic: zero weight.
+# max(common_min_hosts, min(common_share * N, common_max_hosts)) distinct background/live hosts
+# is generic: zero weight. The cap prevents a growing crawl from making widely reused
+# site-builder files count as rare. This is a provisional triage setting, to be evaluated
+# with human labels; it can also suppress shared files used by real scam kits.
 common_min_hosts = 3
 common_share = 0.02
+common_max_hosts = 150
 min_title_len = 8
 # Copy fingerprint: shared word 5-grams (brand tokens removed, background-common ones excluded).
 copy_min_shared = 30          # placeholder; set from sweep
@@ -150,7 +154,7 @@ note = "rule: 'human verification' cloaking gate that redirects to another domai
 
 [[prelabel.rules]]
 label = "scam-kit"
-title = "(?i)\\|\\s*(premium\\s+)?ai trading( automation)? platform\\s*\\|\\s*official"
+title = "(?i)\\|\\s*(a\\s+)?(premium\\s+)?ai trading( automation)?( platform)?\\s*\\|\\s*(official|oficjal)"
 min_invest_terms = 5
 note = "rule: 'AI Trading Platform | Official Website' lead-capture template"
 

@@ -27,7 +27,7 @@ KCDA is the Kings County DA seized-domain set. CBR is the Bank of Russia blackli
 
 - Ingests CT names tiles from static-CT logs (Let's Encrypt and Geomys).
 - Seeds from the Bank of Russia blacklist (52,966 domains at last refresh) and 13 KCDA domains, with pre-seizure pages from the Wayback Machine.
-- Builds a kit library: 54 multi-domain kits and 306 single-site references.
+- Builds a kit library (Oct 21 snapshot: 54 multi-domain kits and 306 single-site references).
 - Fetches flagged sites passively from a firewalled container (about 450-720 visits/h since Oct 17). See [SAFETY.md](SAFETY.md).
 - Runs a labeling queue, then computes precision with a Wilson CI, kappa, backtest and time to flag, and drafts a private memo.
 - Runs on systemd user timers: hourly watchdog, daily CBR and seed refresh, weekly kit rebuild and encrypted backup, monthly classifier retrain (`ops/`).

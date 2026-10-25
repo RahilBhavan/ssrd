@@ -11,3 +11,4 @@ __pycache__/
 
 # Local generated artifacts (textbook, renders).
 exports/
+config/publish-deny.txt
