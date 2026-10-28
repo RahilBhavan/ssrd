@@ -130,7 +130,7 @@ Seed domains, captures and labels stay private and are not in this repository.
 - A fingerprint match shows shared software, not shared operators. Seeds are "listed by CBR", which is an indicator, not a court finding.
 - The KCDA seed set is thin (13 domains), and the recoverable pages are generic WordPress and Elementor, which limits kit detection for that network (`docs/research.md`).
 - It does not trace funds, attribute operators or publish dashboards, and it never submits urlscan scans, logs in or interacts with scam sites.
-- CI exists in `.github/workflows/ci.yml` but had not run on GitHub when this was written. Live behaviour of the container pipeline was not re-run for this documentation pass.
+- CI in `.github/workflows/ci.yml` passes on `main` ([run 40230947729](https://github.com/RahilBhavan/ssrd/actions/runs/40230947729), 25 Oct 2026). Live behaviour of the container pipeline was not re-run for this documentation pass.
 
 ## License
 
