@@ -1,0 +1,14 @@
+[Unit]
+Description=SSRD checked aggregate website publication
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Replace both placeholders with the actual checkout and uv executable before installation.
+WorkingDirectory=@SSRD_ROOT@
+ExecStart=@UV@ run python scripts/deploy_website.py
+UMask=0077
+Nice=10
+TimeoutStartSec=10min
+NoNewPrivileges=true

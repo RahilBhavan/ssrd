@@ -115,16 +115,17 @@ def weekly_volume(conn, reviewer: str) -> dict:
 
 def cbr_forward(conn) -> dict:
     """Live candidates later added to the CBR list: external confirmation independent of us."""
+    alerted = {r[0] for r in conn.execute("SELECT p.domain FROM alert_log a JOIN pages p ON p.id=a.page_id")}
     rows = conn.execute(
-        "SELECT c.domain, c.first_seen, s.listed_at, EXISTS(SELECT 1 FROM alert_log a JOIN pages p ON p.id=a.page_id "
-        "WHERE p.domain=c.domain) AS alerted FROM candidates c JOIN seeds s ON s.domain=c.domain AND s.source='cbr'"
+        "SELECT c.domain, c.first_seen, s.listed_at FROM candidates c JOIN seeds s "
+        "ON s.domain=c.domain AND s.source='cbr'"
     ).fetchall()
     later = [
         r
         for r in rows
         if r["listed_at"] and r["listed_at"] >= datetime.fromtimestamp(r["first_seen"], UTC).strftime("%Y-%m-%d")
     ]
-    return {"candidates_later_listed": len(later), "of_which_alerted": sum(r["alerted"] for r in later)}
+    return {"candidates_later_listed": len(later), "of_which_alerted": sum(r["domain"] in alerted for r in later)}
 
 
 def filter_recall(conn, since: str = "2026-01-01") -> dict:
