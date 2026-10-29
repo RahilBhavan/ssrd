@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="A student research monitor for shared scam-site software. Explore aggregate pipeline counts, measurement limits and a synthetic review example.">
+<title>__TITLE__</title>
+<style>__STYLES__</style>
+</head>
+<body class="__BODY_CLASS__">
+<a class="skip" href="#main">Skip to research</a>
+<div class="wrap">
+<div class="masthead"><strong>RAHIL BHAVAN RESEARCH · SSRD</strong><span>Public project notebook</span></div>
+<nav aria-label="Page"><a href="#overview">Overview</a><a href="#pipeline">Pipeline</a><a href="#evaluation">Evaluation</a><a href="#walkthrough">Example review</a><a href="#definitions">Metric guide</a></nav>
+  <div id="mode-banner" class="banner"></div>
+
+  <header>
+    <div class="brand">
+      <div>
+        <h1>When scam sites return,<br>does the software match?</h1>
+        <p>Certificate Transparency monitor matching newly certified domains against fingerprints of known crypto-investment scam kits. A kit match means <strong>shared site software</strong>, never operator attribution.</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <span id="gen-stamp" class="mono" style="font-size:14px;color:var(--ssrd-dim)"></span>
+      <button id="refresh-btn" style="display:none" type="button">Refresh snapshot</button>
+      <button id="theme-btn" type="button">Switch appearance</button>
+    </div>
+  </header>
+
+  <main id="main">
+  <section class="intro" id="overview" aria-label="Research question">
+    <p><strong>SSRD is the Scam-Site Respawn Detector.</strong> It compares newly certified domains with a library of shared crypto-investment site software. <mark>A match is an investigative lead.</mark> It does not identify an operator or prove that a site is a scam.</p>
+    <div class="method"><strong>Read this page in order:</strong> see what entered the pipeline, inspect what has been measured, then try a synthetic review. Counts describe the monitor's coverage; human review is needed to estimate alert precision.<p id="freshness" class="freshness" role="status"></p></div>
+  </section>
+  __FALLBACK__
+  <section id="kpis" class="kpis"></section>
+
+  <div class="grid-2">
+    <section class="card" id="pipeline">
+      <div class="card-head">
+        <div>
+          <h2>From certificate names to kit matches</h2>
+          <div class="sub">Static-CT names tiles → n-gram classifier (≥ 0.93) → firewalled passive GET (+20m/+2h/+24h) → two-family kit alert</div>
+        </div>
+      </div>
+      <div id="funnel-view" class="funnel-list"></div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--ssrd-border)">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Completed Passive Visits by Outcome</div>
+        <div id="outcome-bar" class="stacked-bar"></div>
+        <div id="outcome-legend" class="legend"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>How activity changes over time</h2>
+          <div class="sub" id="ts-sub">6-hour operational buckets from metrics.jsonl &amp; alert_log</div>
+        </div>
+        <div class="toolbar" id="ts-tabs">
+          <button type="button" data-series="ingest" class="active">CT Ingest</button>
+          <button type="button" data-series="fetch">Passive Visits</button>
+          <button type="button" data-series="alerts">Daily Alerts</button>
+        </div>
+      </div>
+      <div id="ts-chart" class="chart-box"></div>
+    </section>
+  </div>
+
+  <div class="grid-2">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 id="evaluation">What has been measured?</h2>
+          <div class="sub">Every claim carries an explicit confidence label; assistant hints never count toward precision</div>
+        </div>
+      </div>
+      <div class="table-scroll"><table id="eval-table">
+        <thead>
+          <tr><th>Metric</th><th>Measured Value</th><th>95% CI / Split</th><th>Confidence</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table></div>
+      <div id="label-summary" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--ssrd-border);font-size:14px;color:var(--ssrd-dim)"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>How long does an alert take?</h2>
+          <div class="sub">First passive visit is intentionally delayed +20 min so newly certified domains finish provisioning</div>
+        </div>
+      </div>
+      <div id="ttf-stats" style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px;font-size:14px"></div>
+      <div id="ttf-chart" class="chart-box"></div>
+    </section>
+  </div>
+
+  <div class="grid-2">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>The comparison library</h2>
+          <div class="sub" id="kit-sub">Connected components linked by ≥ 2 independent strong signal families</div>
+        </div>
+        <div class="toolbar">
+          <input id="kit-search" class="search-input" type="search" aria-label="Filter kit library" placeholder="Filter kit ID or signal…">
+          <button type="button" data-kfilter="all" class="active">All</button>
+          <button type="button" data-kfilter="kcda">KCDA</button>
+          <button type="button" data-kfilter="cbr">CBR</button>
+          <button type="button" data-kfilter="alerting">Alerting</button>
+        </div>
+      </div>
+      <div class="kit-scroll">
+        <table id="kit-table">
+          <thead>
+            <tr><th>Kit</th><th>Group</th><th>Seeds</th><th>Live Alerts</th><th>Linking Signals</th><th>Summary</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button id="kit-more" type="button" aria-controls="kit-table" aria-expanded="false" hidden>Show more kits</button>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Two-Family Alert Rule &amp; Signal Matrix</h2>
+          <div class="sub">A: content · B: assets · C: page features · D: infrastructure. Infrastructure never alerts alone; the configured rule combines independent evidence.</div>
+        </div>
+      </div>
+      <div id="combo-bars" style="margin-bottom:14px"></div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px">Top Triggering Signals Across Active Alerts</div>
+      <div id="signal-bars"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2><span id="walkthrough">Try an example review</span></h2>
+        <div class="sub" id="walk-sub"></div>
+      </div>
+      <div class="toolbar">
+        <input id="card-search" class="search-input" type="search" aria-label="Filter review examples" placeholder="Filter domain, kit, signal…">
+      </div>
+    </div>
+    <div class="inspector">
+      <div id="alert-list" class="alert-list"></div>
+      <div id="alert-detail" class="alert-detail"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>Where this method stops</h2>
+        <div class="sub">Passive observation only (SAFETY.md &amp; SPEC.md)</div>
+      </div>
+    </div>
+    <ul id="limitations" class="lim-list"></ul>
+  </section>
+
+  <section class="card" id="definitions"><h2>How to read the numbers</h2><dl class="glossary">
+<div><dt>CT names &amp; candidates</dt><dd>Certificate Transparency (CT) records certificate issuance, not website content. Names are filtered into candidates. The headline names count uses the metrics window; candidates are database totals, so these are not a single conversion cohort. Pass rate divides recorded filter passes by recorded names in that window.</dd><dt>Visits &amp; outcomes</dt><dd>A visit is a queued passive retrieval, not a unique site or a human visit. Content means a usable page, not a confirmed scam. Blank, parked, blocked and error outcomes describe retrieval results; expired jobs missed their due window. Outcome shares use the sum of recorded outcome counts.</dd></div>
+<div><dt>Kits, seeds &amp; alerts</dt><dd>Seeds are reference pages from source lists, not adjudications. A kit groups pages sharing software features. Single-site references have no multi-domain cluster. Active alerts satisfy the current rule; cumulative alerts include historical decisions. KCDA and CBR name source groups, not operator identities. In the library, p means pages and d means domains.</dd><dt>Signals &amp; scores</dt><dd>A is page content, B is shared assets, C is page features and D is infrastructure. Signal counts can overlap: one alert may contribute to several rows. A match score combines configured evidence weights; it is not a probability of wrongdoing.</dd></div>
+<div><dt>Precision &amp; backtest</dt><dd>Precision is the scam-kit share of human-reviewed alerts. A reviewed subset can be biased; a frozen random sample is needed for a representative estimate. The 95% interval describes sampling uncertainty, not unobserved bias. Backtest catch rate is held-out reference pages matched to the correct kit; it is not live precision.</dd><dt>Latency &amp; other checks</dt><dd>Median is the middle CT-to-alert delay; p90 is the delay containing 90% of included alerts. Later kit rebuilds are counted separately. Recall is the fraction of known positives selected. CBR forward checks identify later list appearances. Cohen's κ measures agreement beyond chance between two human reviewers; absent measurements remain pending.</dd></div>
+</dl><p class="sub">Source: the monitor's local database and operational metrics, summarized at the snapshot time above. The page contains no captured website HTML. The public review examples use synthetic .test names.</p></section>
+  </main>
+  <footer>
+    <span id="ct-state-line" class="mono"></span>
+    <span>SSRD · Rahil Bhavan · Aggregate research telemetry · No operator attribution</span>
+  </footer>
+</div>
+<div id="tooltip" class="tooltip"></div>
+
+<script id="ssrd-data" type="application/json">__DATA__</script>
+<script>__SCRIPTS__</script>
+</body>
+</html>

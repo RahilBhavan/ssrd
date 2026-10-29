@@ -473,6 +473,58 @@ def cmd_manifest_hash(a):
     print("\n".join(daily_manifest_hashes()))
 
 
+def cmd_dashboard(a):
+    from rich.console import Console
+
+    from . import dashboard
+
+    mode = "private" if a.private else "public"
+    since = _ts(a.freeze) if a.freeze else 0
+    conn = dashboard.connect_ro()
+    try:
+        payload = dashboard.collect_payload(
+            conn,
+            mode=mode,
+            reviewer=a.reviewer,
+            second=a.second,
+            since=since,
+            sample=a.sample,
+            run_backtest=a.backtest,
+        )
+        if a.terminal:
+            dashboard.render_terminal(Console(), payload)
+        if a.svg:
+            svg_path = dashboard.export_svg(payload, Path(a.svg))
+            if mode == "public":
+                dashboard.assert_public_safe(svg_path.read_text(), conn)
+            print(f"wrote {svg_path}")
+        if not a.out and a.terminal and not a.public and not a.private:
+            return
+        dest = dashboard.write_dashboard(
+            conn,
+            mode=mode,
+            out=Path(a.out) if a.out else None,
+            payload=payload,
+        )
+        note = "public redacted showcase" if mode == "public" else "private 0600 briefing; never publish"
+        print(f"wrote {dest} ({note})")
+    finally:
+        conn.close()
+
+
+def cmd_serve(a):
+    from . import dashboard
+
+    dashboard.serve(
+        a.host,
+        a.port,
+        reviewer=a.reviewer,
+        second=a.second,
+        since=_ts(a.freeze) if a.freeze else 0,
+        sample=a.sample,
+    )
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="ssrd", description="Scam-Site Respawn Detector")
     p.add_argument("-v", "--verbose", action="store_true")
@@ -565,6 +617,27 @@ def main(argv=None):
     s.add_argument("--out", default="~/ssrd-backups")
     s.add_argument("--keep", type=int, default=4)
     s.set_defaults(fn=cmd_backup)
+    s = sub.add_parser("dashboard", help="build static showcase HTML (--public or --private) or terminal view")
+    g = s.add_mutually_exclusive_group()
+    g.add_argument("--public", action="store_true", help="redacted showcase for docs/ (default)")
+    g.add_argument("--private", action="store_true", help="private defanged briefing in data/drafts/ (mode 0600)")
+    s.add_argument("--out", help="override output HTML path")
+    s.add_argument("--terminal", action="store_true", help="print Rich multi-panel terminal dashboard")
+    s.add_argument("--svg", help="export Rich terminal dashboard as SVG")
+    s.add_argument("--reviewer", default=os.environ.get("SSRD_REVIEWER", "rahil"))
+    s.add_argument("--second")
+    s.add_argument("--freeze", help="threshold freeze date; precision counts alerts on/after it")
+    s.add_argument("--sample")
+    s.add_argument("--backtest", action="store_true", help="compute fresh 20%% hold-out backtest")
+    s.set_defaults(fn=cmd_dashboard)
+    s = sub.add_parser("serve", help="run read-only local explorer on 127.0.0.1")
+    s.add_argument("--host", default="127.0.0.1", help="loopback address only (127.0.0.1 or ::1)")
+    s.add_argument("--port", type=int, default=8765)
+    s.add_argument("--reviewer", default=os.environ.get("SSRD_REVIEWER", "rahil"))
+    s.add_argument("--second")
+    s.add_argument("--freeze")
+    s.add_argument("--sample")
+    s.set_defaults(fn=cmd_serve)
     a = p.parse_args(argv)
     logging.basicConfig(
         level=logging.DEBUG if a.verbose else logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s"

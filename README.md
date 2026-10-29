@@ -7,6 +7,9 @@
 SSRD watches Certificate Transparency (CT) logs for newly certified domains and checks each one against fingerprints of known fake crypto-investment kits. The aim is to measure whether, and how fast, the operation behind the Brooklyn DA Virtual Currency Unit's Oct 2026 takedown rebuilds. A kit match means "same software", not "same people". The flagged-domain list and seed data are never published.
 
 The figure above is rendered from synthetic fixtures by `scripts/demo_review.py`.
+The website exporter builds a self-contained report with aggregate telemetry and synthetic
+`.test` walkthroughs (`uv run ssrd dashboard --public`). Private domains and captures stay
+on the processing host. See [website operation](docs/run-website.md) for deployment and updates.
 
 ## Results
 
@@ -34,6 +37,7 @@ The measurements above predate this change; precision for the revised scorer is 
 - Builds a kit library (Oct 21 snapshot: 54 multi-domain kits and 306 single-site references).
 - Fetches flagged sites passively from a firewalled container (about 450-720 visits/h since Oct 17). See [SAFETY.md](SAFETY.md).
 - Runs a labeling queue, then computes precision with a Wilson CI, kappa, backtest and time to flag, and drafts a private memo.
+- Builds a privacy-gated showcase dashboard (`ssrd dashboard --public` for redacted aggregate HTML/terminal views; `--private` and `ssrd serve` on `127.0.0.1` for local defanged inspection).
 - Runs on systemd user timers: hourly watchdog, daily CBR and seed refresh, weekly kit rebuild and encrypted backup, monthly classifier retrain (`ops/`).
 
 Seed counts, kit counts and live-run figures come from the same private run as the Results table.
@@ -46,7 +50,7 @@ Seed counts, kit counts and live-run figures come from the same private run as t
 4. **Fingerprint:** `fingerprint.py` computes normalized-HTML TLSH, tag-shingle MinHash, favicon mmh3, asset and inline-script hashes, contact IDs and page class.
 5. **Score:** `score.py` alerts only on strong signals from two different families (content, assets, page features). Infrastructure is supporting evidence only.
 6. **Review and evaluate:** `review.py` and `evaluate.py` give a CLI labeling queue, then precision, kappa, backtest, time to flag, CBR forward confirmations and a threshold sweep on a separate tuning set.
-7. **Report:** `memo.py` drafts the private VCU memo with a confidence label on every lead. `backup.py` writes encrypted off-box backups.
+7. **Report and showcase:** `memo.py` drafts the private VCU memo with a confidence label on every lead. `dashboard.py` generates static offline HTML/SVG showcases and runs a loopback-only read-only explorer. `backup.py` writes encrypted off-box backups.
 
 ## Run it
 
@@ -56,9 +60,9 @@ Offline path. This needs no network and no keys. The CT and fetch tests use reco
 
 ```sh
 uv sync --frozen
-uv run pytest -q          # 71 tests pass (checked Oct 25 2026)
+uv run pytest -q          # 76 tests pass
 uv run ruff check .
-uv run python scripts/demo_review.py   # re-renders docs/review-demo.svg from synthetic data
+uv run python scripts/demo_review.py      # re-renders docs/review-demo.svg from synthetic data
 ```
 
 Live pipeline. This contacts the public CT logs, the Bank of Russia list, urlscan.io and archive.org, and it fetches scam sites. Read [SAFETY.md](SAFETY.md) first. urlscan needs `URLSCAN_API_KEY` in `data/.env`.
@@ -83,6 +87,9 @@ docker compose --profile fetch up -d fetcher
 
 uv run ssrd stats
 uv run ssrd health                                # liveness, throughput, lock probe, near-misses
+uv run ssrd dashboard --public --terminal         # Rich terminal summary + redacted docs/dashboard.html
+uv run ssrd dashboard --private                   # private 0600 briefing → data/drafts/dashboard.html
+uv run ssrd serve --port 8765                     # read-only local explorer bound to 127.0.0.1
 uv run ssrd sample draw final --since 2026-11-09 --until 2026-11-16   # frozen random sample of 100 alerts
 uv run ssrd review --reviewer rahil --sample final                     # enter accepts the assistant hint
 uv run ssrd review --reviewer <classmate> --sample final --limit 50 --blind   # independent second labeler
@@ -100,8 +107,8 @@ uv run ssrd watch                                 # exit 1 if ingest/fetch stall
 - `config/ssrd.toml`: thresholds, keyword lists and CT log URLs. An optional git-ignored `config/ssrd.local.toml` overrides it, for example the allowed egress ASN.
 - `docker/`, `compose.yaml`: hardened ingest and fetcher containers with an nftables egress allowlist.
 - `ops/`: systemd user timers and the job wrapper.
-- `scripts/`: privacy check, publish script and the review demo renderer.
-- `docs/`: architecture, labeling guide, research log and the demo figure.
+- `scripts/`: privacy check, publish script and synthetic review renderer (`demo_review.py`), and the static website deployer.
+- `docs/`: architecture, labeling guide, research log, demo figures and the redacted HTML showcase (`dashboard.html`).
 - `CLAUDE.md`: agent workflow file for the author's coding agent; not needed to use the code.
 
 ## Documentation
@@ -111,6 +118,8 @@ uv run ssrd watch                                 # exit 1 if ingest/fetch stall
 - [docs/architecture.md](docs/architecture.md): pipeline, modules and storage.
 - [docs/labeling-guide.md](docs/labeling-guide.md): what each label means; read before labeling.
 - [docs/research.md](docs/research.md): sourced research and a dated log of findings.
+- [docs/run-website.md](docs/run-website.md): static website deployment, automatic aggregate updates and failure recovery.
+- `uv run ssrd dashboard --public` generates `docs/dashboard.html` locally; generated snapshots are not source releases.
 
 ## Sources
 
@@ -129,8 +138,8 @@ Seed domains, captures and labels stay private and are not in this repository.
 - The backtest covers multi-domain kits only. A single-site reference can never match its own held-out page.
 - A fingerprint match shows shared software, not shared operators. Seeds are "listed by CBR", which is an indicator, not a court finding.
 - The KCDA seed set is thin (13 domains), and the recoverable pages are generic WordPress and Elementor, which limits kit detection for that network (`docs/research.md`).
-- It does not trace funds, attribute operators or publish dashboards, and it never submits urlscan scans, logs in or interacts with scam sites.
-- CI in `.github/workflows/ci.yml` passes on `main` ([run 40230947729](https://github.com/RahilBhavan/ssrd/actions/runs/40230947729), 25 Oct 2026). Live behaviour of the container pipeline was not re-run for this documentation pass.
+- It does not trace funds, attribute operators or publish live lists of flagged domains, and it never submits urlscan scans, logs in or interacts with scam sites.
+- CI exists in `.github/workflows/ci.yml` but had not run on GitHub when this was written. Live behaviour of the container pipeline was not re-run for this documentation pass.
 
 ## License
 

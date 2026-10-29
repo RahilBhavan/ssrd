@@ -16,7 +16,7 @@ BUILT ONCE (week 1, re-seedable)                                                
  KCDA set ─┼─▶ seeds.py ──▶ urlscan search/result ──▶ fingerprint.py ──▶ kits.py ───┘            │
  DFPI ─────┘   (clean)      (cache JSON locally)                         (cluster, name)          ▼
                                                                                          labels ──▶ evaluate.py
- CBR daily additions ─────────────────────────────────────────────────────────────────────────────▶ (forward check)
+ CBR daily additions ──────────────────────────────────────────────────────────────────────────────▶ (forward check)
 ```
 
 ## Modules (`src/ssrd/`)
@@ -38,6 +38,8 @@ BUILT ONCE (week 1, re-seedable)                                                
 | `sample.py` | Frozen uniform random samples of alerts (`samples`, `sample_members`): drawn once with a seed, never redrawn; precision and kappa are computed on them. |
 | `evaluate.py` | Precision + Wilson CI (overall, KCDA, CBR; `--freeze` counts only post-freeze alerts), kappa, backtest (re-cluster without hold-outs), time to flag, weekly volume, CBR forward check, filter recall on CBR, threshold sweep on pre-freeze labels. |
 | `memo.py` | Private VCU memo draft + leads CSV in `data/drafts/` (0600). Confidence per lead: confirmed (2 reviewers, or 1 + later CBR-listed) / likely (1 reviewer) / speculative (unreviewed). Sends nothing. |
+| `dashboard.py` | Showcase builder (`--public` redacted aggregate HTML + synthetic `.test` cards; `--private` `0600` defanged briefing; `--terminal` / `--svg` Rich overview) and loopback-only (`127.0.0.1`) read-only explorer (`ssrd serve`). |
+| `dashboard_html.py` | Self-contained offline HTML/SVG/JS template with strict `Content-Security-Policy` (`default-src 'none'` on static builds; raw HTML is never rendered). |
 | `backup.py` | SQLite online-backup snapshot + captures/manifests/seeds/models/drafts → tar.gz → gpg AES-256 (passphrase `data/.backup_key`); never includes `data/.env`. |
 | `cli.py` | `ssrd` entry point; the fetcher refuses to run unless enabled, firewalled and on an allowed ASN. |
 

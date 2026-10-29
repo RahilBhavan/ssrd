@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh SSRD public aggregate website hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=3min
+Unit=ssrd-website.service
+
+[Install]
+WantedBy=timers.target
